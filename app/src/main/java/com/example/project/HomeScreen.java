@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -52,6 +53,24 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.view.View;
 import android.view.View.OnClickListener;
+
+import twitter4j.*;
+
+import com.twitter.sdk.android.core.DefaultLogger;
+import com.twitter.sdk.android.core.Result;
+import com.twitter.sdk.android.core.Twitter;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.TwitterConfig;
+import com.twitter.sdk.android.core.models.Tweet;
+import com.twitter.sdk.android.tweetui.TweetTimelineListAdapter;
+import com.twitter.sdk.android.tweetui.TweetUtils;
+import com.twitter.sdk.android.core.Callback;
+import com.twitter.sdk.android.core.models.Tweet;
+import com.twitter.sdk.android.core.TwitterException;
+import com.twitter.sdk.android.tweetui.TweetUtils;
+import com.twitter.sdk.android.tweetui.TweetView;
+import com.twitter.sdk.android.tweetui.UserTimeline;
+
 public class HomeScreen extends AppCompatActivity {
 
     private FirebaseUser user;
@@ -61,10 +80,17 @@ public class HomeScreen extends AppCompatActivity {
 
     private static final String TAG = "User";
     private WebView twitterFeed;
+    private ListView tweetList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
+        TwitterConfig config = new TwitterConfig.Builder(this)
+                .logger(new DefaultLogger(Log.DEBUG))
+                .twitterAuthConfig(new TwitterAuthConfig("0tauDT6cxwdGQ054c2BH1XEf9", "hGGso4CbEPFlIHaCq05LveymIvaWEGElls7f1RQSIVzOlk3BGa"))
+                .debug(true)
+                .build();
+        Twitter.initialize(config);
         user = getInstance().getCurrentUser();
         String uid = user.getUid();
 
@@ -103,7 +129,7 @@ public class HomeScreen extends AppCompatActivity {
 
 
         log = findViewById(R.id.log);
-        log.setOnClickListener(new View.OnClickListener(){
+        log.setOnClickListener(new OnClickListener(){
             @Override
             public void onClick(View view){
                 signOut();
@@ -116,17 +142,32 @@ public class HomeScreen extends AppCompatActivity {
 
         setContentView(R.layout.activity_home_screen);
 
-        twitterFeed = findViewById(R.id.Twitter);
-
-
+//        twitterFeed = findViewById(R.id.Twitter);
+//
+//
         String fram = "<iframe border=0 frameborder=0 height=300 width=387 src=\"https://ucrtoday.ucr.edu/tag/traffic\"></iframe>";//"<iframe width=\"450\" height=\"260\" style=\"border: 1px solid #cccccc;\" src=\"http://api.thingspeak.com/channels/31592/charts/1?width=450&height=260&results=60&dynamic=true\" ></iframe>"; //"<iframe scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" src=\"https://platform.twitter.com/widgets/widget_iframe.bb9f4b065c53172f0378057aff0cb3f7.html?origin=https%3A%2F%2Fpublish.twitter.com\" title=\"Twitter settings iframe\" style=\"display: none;\"></iframe>";
-        //String fram = "<iframe border=0 frameborder=0 height=300 width=387 src=\"https://transportation.ucr.edu/news\"></iframe>";//"<iframe width=\"450\" height=\"260\" style=\"border: 1px solid #cccccc;\" src=\"http://api.thingspeak.com/channels/31592/charts/1?width=450&height=260&results=60&dynamic=true\" ></iframe>"; //"<iframe scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" src=\"https://platform.twitter.com/widgets/widget_iframe.bb9f4b065c53172f0378057aff0cb3f7.html?origin=https%3A%2F%2Fpublish.twitter.com\" title=\"Twitter settings iframe\" style=\"display: none;\"></iframe>";
-        //String fram = "<iframe src=\"https://embed.waze.com/iframe?zoom=15&lat=33.973706&lon=-117.328064&ct=livemap\" width=\"600\" height=\"450\" allowfullscreen></iframe>";
+//        //String fram = "<iframe border=0 frameborder=0 height=300 width=387 src=\"https://transportation.ucr.edu/news\"></iframe>";//"<iframe width=\"450\" height=\"260\" style=\"border: 1px solid #cccccc;\" src=\"http://api.thingspeak.com/channels/31592/charts/1?width=450&height=260&results=60&dynamic=true\" ></iframe>"; //"<iframe scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" src=\"https://platform.twitter.com/widgets/widget_iframe.bb9f4b065c53172f0378057aff0cb3f7.html?origin=https%3A%2F%2Fpublish.twitter.com\" title=\"Twitter settings iframe\" style=\"display: none;\"></iframe>";
+//        //String fram = "<iframe src=\"https://embed.waze.com/iframe?zoom=15&lat=33.973706&lon=-117.328064&ct=livemap\" width=\"600\" height=\"450\" allowfullscreen></iframe>";
 //        twitterFeed.setInitialScale(0);
 //        twitterFeed.getSettings().setLoadWithOverviewMode(true);
-        twitterFeed.getSettings().setBuiltInZoomControls(true);
-        twitterFeed.getSettings().setDisplayZoomControls(false);
-        twitterFeed.loadData(fram, "text/html", null);
+//        String fram = "<a class=\"twitter-timeline\" href=\"https://twitter.com/UCRTAPS?ref_src=twsrc%5Etfw\">Tweets by UCRTAPS</a> <script async src=\"https://platform.twitter.com/widgets.js\" charset=\"utf-8\"></script>";
+//        twitterFeed.getSettings().setBuiltInZoomControls(true);
+//        twitterFeed.getSettings().setDisplayZoomControls(false);
+//        twitterFeed.loadData(fram, "text/html", null);
+
+        final UserTimeline userTimeline = new UserTimeline.Builder()
+                .screenName("UCRTAPS")
+                .build();
+
+        final TweetTimelineListAdapter adapter = new TweetTimelineListAdapter.Builder(this)
+                .setTimeline(userTimeline)
+                .build();
+        tweetList = (ListView) findViewById(R.id.tweets);
+        tweetList.setAdapter(adapter);
+
+
+
+//        tweetList.setAdapter(tweetadapter);
 
 
 
@@ -435,6 +476,8 @@ public class HomeScreen extends AppCompatActivity {
         }
     }
 
+
+
     private String nextClass(User_Information user) {
         List<String> classes = user.AccessClass();
         SimpleDateFormat simpleDateformat = new SimpleDateFormat("HHmm");
@@ -470,5 +513,7 @@ public class HomeScreen extends AppCompatActivity {
                     }
                 });
     }
+
+
 
 }
