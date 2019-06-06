@@ -101,6 +101,7 @@ public class HomeScreen extends AppCompatActivity {
         });
         //----------------------------------------------------
 
+
         log = findViewById(R.id.log);
         log.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -130,6 +131,8 @@ public class HomeScreen extends AppCompatActivity {
 
 
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
