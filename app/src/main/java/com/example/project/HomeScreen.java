@@ -14,13 +14,14 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -43,6 +44,10 @@ import static com.google.firebase.auth.FirebaseAuth.getInstance;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.view.MenuItem;
+import android.view.Menu;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.os.Bundle;
 import android.widget.Button;
 import android.view.View;
@@ -50,11 +55,12 @@ import android.view.View.OnClickListener;
 public class HomeScreen extends AppCompatActivity {
 
     private FirebaseUser user;
-    private Button updatePersonal, updateSchedule,google_maps,logout,button;
+    private Button updatePersonal, updateSchedule,google_maps, button, log;
     private String nextLocation;                                                //0-------------------- test
     private static User_Information userInfo;
 
     private static final String TAG = "User";
+    private WebView twitterFeed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +72,6 @@ public class HomeScreen extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
-        addListenerOnButton();
         startService(new Intent(getBaseContext(),MyService.class));
         //------------------------------------------------------
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -96,63 +101,8 @@ public class HomeScreen extends AppCompatActivity {
         });
         //----------------------------------------------------
 
-        setContentView(R.layout.activity_home_screen);
-
-        //----------------------------------------------------      Update Personal Information Button
-        updatePersonal = findViewById(R.id.UpdatePersonalOption);
-        updatePersonal.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent myIntent = new Intent(HomeScreen.this, EditUserActivity.class);
-                myIntent.putExtra("personalData",userInfo);
-                startActivity(myIntent);
-            }
-        });
-        //--------------------------------------------------------------------
-
-        // ---------------------------------------------         Update Schedule Information button
-        updateSchedule = findViewById(R.id.UpdateScheduleOption);
-        updateSchedule.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent myIntent = new Intent(HomeScreen.this, ScheduleActivity.class);
-                startActivity(myIntent);
-            }
-        });
-        // -----------------------------------------------------------
-
-        google_maps =  findViewById(R.id.launch_google_maps);
-        google_maps.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                nextLocation = nextClass(userInfo);
-                String lot_to_route_to = "None";
-
-                Intent myIntent;
-
-                if(nextLocation == "N/A"){
-                    myIntent = new Intent(HomeScreen.this, HomeScreen.class);
-                }
-                else {
-                    String preferred_lot = userInfo.AccessLot();
-                    myIntent = new Intent(HomeScreen.this, LaunchGoogleMaps.class);
-                    if (userInfo.AccessLot().equals("None")) {
-
-                        LaunchNearestClass launchNearestClass = new LaunchNearestClass();
-                        launchNearestClass.execute(nextLocation);
-                    } else {
-                        // try the preferred lot
-                        String preferred_lot_URL = lot_to_URL(preferred_lot);
-                        TryPreferredLot tryPreferredLot = new TryPreferredLot();
-                        tryPreferredLot.execute(preferred_lot_URL);
-
-                    }
-                }
-            }
-        });
-
-        logout = findViewById(R.id.log);
-        logout.setOnClickListener(new View.OnClickListener(){
+        log = findViewById(R.id.log);
+        log.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
                 signOut();
@@ -161,6 +111,92 @@ public class HomeScreen extends AppCompatActivity {
             }
         });
 
+        //------------------------------------------------------
+
+        setContentView(R.layout.activity_home_screen);
+
+        twitterFeed = findViewById(R.id.Twitter);
+
+
+        String fram = "<iframe border=0 frameborder=0 height=300 width=387 src=\"https://ucrtoday.ucr.edu/tag/traffic\"></iframe>";//"<iframe width=\"450\" height=\"260\" style=\"border: 1px solid #cccccc;\" src=\"http://api.thingspeak.com/channels/31592/charts/1?width=450&height=260&results=60&dynamic=true\" ></iframe>"; //"<iframe scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" src=\"https://platform.twitter.com/widgets/widget_iframe.bb9f4b065c53172f0378057aff0cb3f7.html?origin=https%3A%2F%2Fpublish.twitter.com\" title=\"Twitter settings iframe\" style=\"display: none;\"></iframe>";
+        //String fram = "<iframe border=0 frameborder=0 height=300 width=387 src=\"https://transportation.ucr.edu/news\"></iframe>";//"<iframe width=\"450\" height=\"260\" style=\"border: 1px solid #cccccc;\" src=\"http://api.thingspeak.com/channels/31592/charts/1?width=450&height=260&results=60&dynamic=true\" ></iframe>"; //"<iframe scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" src=\"https://platform.twitter.com/widgets/widget_iframe.bb9f4b065c53172f0378057aff0cb3f7.html?origin=https%3A%2F%2Fpublish.twitter.com\" title=\"Twitter settings iframe\" style=\"display: none;\"></iframe>";
+        //String fram = "<iframe src=\"https://embed.waze.com/iframe?zoom=15&lat=33.973706&lon=-117.328064&ct=livemap\" width=\"600\" height=\"450\" allowfullscreen></iframe>";
+//        twitterFeed.setInitialScale(0);
+//        twitterFeed.getSettings().setLoadWithOverviewMode(true);
+        twitterFeed.getSettings().setBuiltInZoomControls(true);
+        twitterFeed.getSettings().setDisplayZoomControls(false);
+        twitterFeed.loadData(fram, "text/html", null);
+
+
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_options, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        //passes unison pr list to differencelistactivity
+        if (id == R.id.updateScheduleMenuOp) {
+            System.out.println("Hit unison button");
+            Intent myIntent = new Intent(this, ScheduleActivity.class);
+
+            startActivity(myIntent);
+        }
+
+        if (id == R.id.updatePersonalMenuOp) {
+            System.out.println("Hit unison button");
+            Intent myIntent = new Intent(this, EditUserActivity.class);
+            myIntent.putExtra("personalData",userInfo);
+
+            startActivity(myIntent);
+        }
+
+        if (id == R.id.navigateClassMenuOp) {
+            System.out.println("Hit unison button");
+            nextLocation = nextClass(userInfo);
+            String lot_to_route_to = "None";
+
+            Intent myIntent;
+
+            if(nextLocation == "N/A"){
+                myIntent = new Intent(HomeScreen.this, HomeScreen.class);
+            }
+            else {
+                String preferred_lot = userInfo.AccessLot();
+                myIntent = new Intent(HomeScreen.this, LaunchGoogleMaps.class);
+                if (userInfo.AccessLot().equals("None")) {
+
+                    LaunchNearestClass launchNearestClass = new LaunchNearestClass();
+                    launchNearestClass.execute(nextLocation);
+                } else {
+                    // try the preferred lot
+                    String preferred_lot_URL = lot_to_URL(preferred_lot);
+                    TryPreferredLot tryPreferredLot = new TryPreferredLot();
+                    tryPreferredLot.execute(preferred_lot_URL);
+
+                }
+            }
+        }
+
+        if (id == R.id.weblinkMenuOp) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://flexport.ucr.edu/ebusiness/Account/Portal"));
+            startActivity(browserIntent);
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent myIntent = new Intent(this, HomeScreen.class);
+
+        startActivity(myIntent);
     }
 
     private String lot_to_URL(String preferred_lot) {
@@ -415,24 +451,6 @@ public class HomeScreen extends AppCompatActivity {
             }
         }
         return nextClassLocation;
-    }
-
-    public void addListenerOnButton() {
-
-        button = (Button) findViewById(R.id.weblink);
-
-        button.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(View view) {
-
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://flexport.ucr.edu/ebusiness/Account/Portal"));
-                startActivity(browserIntent);
-
-            }
-
-        });
-
     }
 
     private void signOut() {
